@@ -161,8 +161,8 @@ def invert(canvas):
     canvas.data.cropPopToHappen=False
     canvas.data.drawOn=False
     if canvas.data.image!=None:
-        print(PIL.ImageOps.invert(canvas.data.image))
-        canvas.data.image=PIL.ImageOps.invert(canvas.data.image)
+        #print(PIL.ImageOps.invert(canvas.data.image))
+        canvas.data.image=PIL.ImageOps.invert(canvas.data.image.convert('RGB'))
         save(canvas)
         canvas.data.undoQueue.append(canvas.data.image.copy())
         canvas.data.imageForTk=makeImageForTk(canvas)
