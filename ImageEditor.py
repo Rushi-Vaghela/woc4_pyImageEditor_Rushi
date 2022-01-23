@@ -1,3 +1,4 @@
+from cProfile import label
 from tkinter import *
 import os
 from tkinter import messagebox
@@ -167,12 +168,30 @@ def invert(canvas):
         canvas.data.imageForTk=makeImageForTk(canvas)
         drawImage(canvas)
 
+def sepia(canvas):
+    canvas.data.colourPopToHappen= False
+    canvas.data.cropPopToHappen=False
+    canvas.data.drawOn=False
+
+    if canvas.data.image!=None:
+        sepiaData=[]
+        for col in range(canvas.data.image.size[1]):
+            for row in range(canvas.data.image.size[0]):
+                r, g, b = canvas.data.image.getpixel((row,col))[0:3]
+                avg= int(round((r + g + b)/3.0))
+                R, G, B= avg+100, avg+50, avg
+                sepiaData.append((R, G, B))
+        canvas.data.image.putdata(sepiaData)
+        save(canvas)
+        canvas.data.undoQueue.append(canvas.data.image.copy())
+        canvas.data.imageForTk=makeImageForTk(canvas)
+        drawImage(canvas)
+        
 def keyPressed(canvas, event):
     if event.keysym=="z":
         undo(canvas)
     elif event.keysym=="y":
         redo(canvas)
-        
 
 
 def undo(canvas):
@@ -343,6 +362,9 @@ def menuInit(root, canvas):
    
     filtermenu.add_command(label="Invert", \
                            command=lambda:invert(canvas))
+
+    filtermenu.add_command(label="Sepia",\
+                           command=lambda:sepia(canvas))
     
     menubar.add_cascade(label="Filter", menu=filtermenu)
     root.config(menu=menubar)
