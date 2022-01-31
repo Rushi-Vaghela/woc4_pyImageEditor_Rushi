@@ -655,6 +655,20 @@ def drawImage(canvas):
         canvas.data.imageTopX=int(round(canvas.data.width/2.0-canvas.data.resizedIm.size[0]/2.0))
         canvas.data.imageTopY=int(round(canvas.data.height/2.0-canvas.data.resizedIm.size[1]/2.0))
 
+############# DESKTOP BK ##############
+
+## Please comment this function out if you use this on any OS apart from Windows
+
+def desktopBk(canvas):
+    if canvas.data.image!=None:
+        new=canvas.data.image.copy()
+        # Windows desktop photos are supposed to be bitmap images
+        newLocation=os.path.dirname(\
+            canvas.data.imageLocation)+"/desktopPhoto.bmp"
+        new.save(newLocation)
+        SPI_SETDESKWALLPAPER = 20  
+        ctypes.windll.user32.SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, str(newLocation), 0)
+
 ############ INITIALIZE ##############
 
 def init(root, canvas):
@@ -733,6 +747,13 @@ def buttonsInit(root, canvas):
                        background=backgroundColour ,width=buttonWidth,\
                        height=buttonHeight, command=lambda: reset(canvas))
     resetButton.grid(row=9,column=0)
+
+    #Please comment this button out if you use this on any OS apart from Windows
+    desktopButton=Button(toolKitFrame, text="Make Desktop Bk",\
+                          background=backgroundColour,height=buttonHeight,\
+                          width=buttonWidth,command=lambda: desktopBk(canvas))
+    desktopButton.grid(row=10,column=0)
+    toolKitFrame.pack(side=RIGHT)
     toolKitFrame.pack(side=RIGHT)
 
     
