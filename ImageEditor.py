@@ -754,7 +754,7 @@ def buttonsInit(root, canvas):
                           width=buttonWidth,command=lambda: desktopBk(canvas))
     desktopButton.grid(row=10,column=0)
     toolKitFrame.pack(side=RIGHT)
-    toolKitFrame.pack(side=RIGHT)
+    
 
     
 def menuInit(root, canvas):
@@ -794,8 +794,8 @@ def run():
     
     root = Tk()
     root.title("Image Editor")
-    canvasWidth=1000
-    canvasHeight=700
+    canvasWidth=1250
+    canvasHeight=780
     canvas = Canvas(root, width=canvasWidth, height=canvasHeight, \
                     background="gray")
     
