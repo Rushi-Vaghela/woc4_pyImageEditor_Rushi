@@ -130,11 +130,10 @@ def changeColours(canvas, redSlider, blueSlider, \
         histWindow.destroy()
         canvas.data.histWindowClose=False
     else:
-        # the slider value indicates the % by which the red/green/blue
-        # value of the pixels of the image need to incresed (for +ve values)
-        # or decreased (for -ve values)
+        
         if canvas.data.image!=None and histWindow.winfo_exists() :
-            R, G, B= canvas.data.image.split()
+            #print(canvas.data.image.split())
+            R, G, B= canvas.data.image.split()[0:3]
             sliderValR=redSlider.get()
             (previousR, previousG, previousB)= previousRGB
             scaleR=(sliderValR-previousR)/100.0
@@ -209,31 +208,25 @@ def colourPop(canvas):
 
 
 def getPixel(event, canvas):
-    # have to check if Colour Pop button is pressed or not, otherwise, the root
-    # events which point to different functions based on what button has been
-    # pressed will get mixed up
-    try: # to avoid confusion between the diffrent events
-        # asscoaited with crop and colourPop
+    
+    try: 
         if canvas.data.colourPopToHappen==True and \
            canvas.data.cropPopToHappen==False and canvas.data.image!=None :
             data=[]
-            # catch the location of the pixel selected by the user
-            # multiply it by the scale to get pixel's olaction of the
-            #actual image
+            
             canvas.data.pixelx=\
             int(round((event.x-canvas.data.imageTopX)*canvas.data.imageScale))
             canvas.data.pixely=\
             int(round((event.y-canvas.data.imageTopY)*canvas.data.imageScale))
             pixelr, pixelg, pixelb= \
             canvas.data.image.getpixel((canvas.data.pixelx, canvas.data.pixely))
-            # the amount of deviation allowed from selected pixel's value
+           
             tolerance=60 
             for y in range(canvas.data.image.size[1]):
                 for x in range(canvas.data.image.size[0]):
-                    r, g, b= canvas.data.image.getpixel((x, y))
+                    r, g, b= canvas.data.image.getpixel((x, y))[0:3]
                     avg= int(round((r + g + b)/3.0))
-                    # if the deviation of each pixel value > tolerance,
-                    # make them gray else keep them coloured
+                    
                     if (abs(r-pixelr)>tolerance or
                         abs(g-pixelg)>tolerance or
                         abs(b-pixelb)>tolerance ):
@@ -322,9 +315,7 @@ def changeBrightness(canvas, brightnessWindow, brightnessSlider, \
         canvas.data.brightnessWindowClose=False
         
     else:
-        # increasing pixel values according to slider value increases
-        #brightness we change ot according to the difference between the
-        # previous value and the current slider value
+       
         if canvas.data.image!=None and brightnessWindow.winfo_exists():
             sliderVal=brightnessSlider.get()
             scale=(sliderVal-previousVal)/100.0
@@ -486,9 +477,7 @@ def performSolarize(canvas, solarizeWindow, solarizeSlider, previousThreshold):
         canvas.data.solarizeWindowClose=False
         
     else:
-        # the  slider denotes the % of solarization thta the user wants,
-        # so the threshold (above which pixels are inverted) is inversely
-        # related to the slider value
+       
         if solarizeWindow.winfo_exists():
             sliderVal=solarizeSlider.get()
             threshold_=255-sliderVal
@@ -510,9 +499,7 @@ def posterize(canvas):
     canvas.data.colourPopToHappen=False
     canvas.data.cropPopToHappen=False
     canvas.data.drawOn=False
-    # we basically reduce the range of colurs from 256 to 5 bits
-    # and so, assign a single new value to each colour value
-    # in each succesive range
+   
     posterData=[]
     if canvas.data.image!=None:
         for col in range(canvas.data.imageSize[1]):
