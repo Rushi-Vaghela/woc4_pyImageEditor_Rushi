@@ -467,11 +467,13 @@ def buttonsInit(root, canvas):
                         width=buttonWidth,height=buttonHeight, \
                         command=lambda: mirror(canvas))
     mirrorButton.grid(row=5,column=0)
+    
     flipButton=Button(toolKitFrame, text="Flip Vertical",\
                       background=backgroundColour ,\
                       width=buttonWidth,height=buttonHeight, \
                       command=lambda: flip(canvas))
     flipButton.grid(row=6,column=0)
+    
     transposeButton=Button(toolKitFrame, text="Rotate",\
                            background=backgroundColour, width=buttonWidth,\
                            height=buttonHeight,command=lambda: transpose(canvas))
