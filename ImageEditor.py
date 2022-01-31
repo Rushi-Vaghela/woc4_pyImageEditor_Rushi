@@ -76,6 +76,51 @@ def performCrop(event,canvas):
     canvas.data.imageForTk=makeImageForTk(canvas)
     drawImage(canvas)
 
+def closeBrightnessWindow(canvas):
+    if canvas.data.image!=None:
+        save(canvas)
+        canvas.data.undoQueue.append(canvas.data.image.copy())
+        canvas.data.brightnessWindowClose=True
+
+def changeBrightness(canvas, brightnessWindow, brightnessSlider, \
+                     previousVal):
+    if canvas.data.brightnessWindowClose==True:
+        brightnessWindow.destroy()
+        canvas.data.brightnessWindowClose=False
+        
+    else:
+        # increasing pixel values according to slider value increases
+        #brightness we change ot according to the difference between the
+        # previous value and the current slider value
+        if canvas.data.image!=None and brightnessWindow.winfo_exists():
+            sliderVal=brightnessSlider.get()
+            scale=(sliderVal-previousVal)/100.0
+            canvas.data.image=canvas.data.image.point(\
+                lambda i: i+ int(round(i*scale)))  
+            canvas.data.imageForTk=makeImageForTk(canvas)
+            drawImage(canvas)
+            canvas.after(200, \
+            lambda: changeBrightness(canvas, brightnessWindow, \
+                                     brightnessSlider, sliderVal))
+
+       
+def brightness(canvas):
+    canvas.data.colourPopToHappen=False
+    canvas.data.cropPopToHappen=False
+    canvas.data.drawOn=False
+    brightnessWindow=Toplevel(canvas.data.mainWindow)
+    brightnessWindow.title("Brightness")
+    brightnessSlider=Scale(brightnessWindow, from_=-100, to=100,\
+                           orient=HORIZONTAL)
+    brightnessSlider.pack()
+    OkBrightnessFrame=Frame(brightnessWindow)
+    OkBrightnessButton=Button(OkBrightnessFrame, text="OK", \
+                              command=lambda: closeBrightnessWindow(canvas))
+    OkBrightnessButton.grid(row=0,column=0)
+    OkBrightnessFrame.pack(side=BOTTOM)
+    changeBrightness(canvas, brightnessWindow, brightnessSlider,0)
+    brightnessSlider.set(0)
+
 def reset(canvas):
     canvas.data.colourPopToHappen=False
     canvas.data.cropPopToHappen=False
@@ -410,6 +455,12 @@ def buttonsInit(root, canvas):
                       width=buttonWidth, height=buttonHeight, \
                       command=lambda:crop(canvas))
     cropButton.grid(row=0,column=0)
+
+    brightnessButton=Button(toolKitFrame, text="Brightness",\
+                            background=backgroundColour ,\
+                            width=buttonWidth, height=buttonHeight,\
+                            command=lambda: brightness(canvas))
+    brightnessButton.grid(row=1 ,column=0)
     
     mirrorButton=Button(toolKitFrame, text="Flip Horizontal",\
                         background=backgroundColour, \
