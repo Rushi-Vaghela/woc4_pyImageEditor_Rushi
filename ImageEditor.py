@@ -85,6 +85,171 @@ def drawDraw(event, canvas):
         canvas.data.imageForTk=makeImageForTk(canvas)
         drawImage(canvas)
 
+###########################################
+
+def closeHistWindow(canvas):
+    if canvas.data.image!=None:
+        save(canvas)
+        canvas.data.undoQueue.append(canvas.data.image.copy())
+        canvas.data.histWindowClose=True
+
+def histogram(canvas):
+    canvas.data.colourPopToHappen=False
+    canvas.data.cropPopToHappen=False
+    canvas.data.drawOn=False
+    histWindow=Toplevel(canvas.data.mainWindow)
+    histWindow.title("Histogram")
+    canvas.data.histCanvasWidth=350
+    canvas.data.histCanvasHeight=475
+    histCanvas = Canvas(histWindow, width=canvas.data.histCanvasWidth, \
+                        height=canvas.data.histCanvasHeight)
+    histCanvas.pack()
+    # provide sliders to the user to manipulate red, green and blue amounts in the image
+    redSlider=Scale(histWindow, from_=-100, to=100, \
+                    orient=HORIZONTAL, label="R")
+    redSlider.pack()
+    blueSlider=Scale(histWindow, from_=-100, to=100,\
+                     orient=HORIZONTAL, label="B")
+    blueSlider.pack()
+    greenSlider=Scale(histWindow, from_=-100, to=100,\
+                      orient=HORIZONTAL, label="G")
+    greenSlider.pack()
+    OkHistFrame=Frame(histWindow)
+    OkHistButton=Button(OkHistFrame, text="OK", \
+                        command=lambda: closeHistWindow(canvas))
+    OkHistButton.grid(row=0,column=0)
+    OkHistFrame.pack(side=BOTTOM)
+    initialRGB=(0,0,0)
+    changeColours(canvas, redSlider, blueSlider, \
+                  greenSlider, histWindow, histCanvas, initialRGB)
+
+
+def changeColours(canvas, redSlider, blueSlider, \
+                  greenSlider, histWindow, histCanvas, previousRGB):
+    if canvas.data.histWindowClose==True:
+        histWindow.destroy()
+        canvas.data.histWindowClose=False
+    else:
+        # the slider value indicates the % by which the red/green/blue
+        # value of the pixels of the image need to incresed (for +ve values)
+        # or decreased (for -ve values)
+        if canvas.data.image!=None and histWindow.winfo_exists() :
+            R, G, B= canvas.data.image.split()
+            sliderValR=redSlider.get()
+            (previousR, previousG, previousB)= previousRGB
+            scaleR=(sliderValR-previousR)/100.0
+            R=R.point(lambda i: i+ int(round(i*scaleR)))
+            sliderValG=greenSlider.get()
+            scaleG=(sliderValG-previousG)/100.0
+            G=G.point(lambda i: i+ int(round(i*scaleG)))
+            sliderValB=blueSlider.get()
+            scaleB=(sliderValB-previousB)/100.0
+            B=B.point(lambda i: i+ int(round(i*scaleB)))
+            canvas.data.image = Image.merge(canvas.data.image.mode, (R, G, B))
+            
+            canvas.data.imageForTk=makeImageForTk(canvas)
+            drawImage(canvas)
+            displayHistogram(canvas, histWindow, histCanvas)
+            previousRGB=(sliderValR, sliderValG, sliderValB)
+            canvas.after(200, lambda: changeColours(canvas, redSlider,\
+                blueSlider, greenSlider,  histWindow, histCanvas, previousRGB))
+
+def displayHistogram(canvas,histWindow, histCanvas):
+    histCanvasWidth=canvas.data.histCanvasWidth
+    histCanvasHeight=canvas.data.histCanvasHeight
+    margin=50
+    if canvas.data.image!=None:
+        histCanvas.delete(ALL)
+        im=canvas.data.image
+        #x-axis 
+        histCanvas.create_line(margin-1, histCanvasHeight-margin+1,\
+                               margin-1+ 258, histCanvasHeight-margin+1)
+        xmarkerStart=margin-1
+        for i in range(0,257,64):
+            xmarker="%d" % (i)
+            histCanvas.create_text(xmarkerStart+i,\
+                                   histCanvasHeight-margin+7, text=xmarker)
+        #y-axis
+        histCanvas.create_line(margin-1, \
+                               histCanvasHeight-margin+1, margin-1, margin)
+        ymarkerStart= histCanvasHeight-margin+1
+        for i in range(0, histCanvasHeight-2*margin+1, 50):
+            ymarker="%d" % (i)
+            histCanvas.create_text(margin-1-10,\
+                                   ymarkerStart-i, text=ymarker)
+            
+        R, G, B=im.histogram()[:256], im.histogram()[256:512], \
+                 im.histogram()[512:768]
+        for i in range(len(R)):
+            pixelNo=R[i]
+            histCanvas.create_oval(i+margin, \
+                            histCanvasHeight-pixelNo/100.0-1-margin, i+2+margin,\
+                            histCanvasHeight-pixelNo/100.0+1-margin, \
+                                   fill="red", outline="red")
+        for i in range(len(G)):
+            pixelNo=G[i]
+            histCanvas.create_oval(i+margin, \
+                            histCanvasHeight-pixelNo/100.0-1-margin, i+2+margin,\
+                            histCanvasHeight-pixelNo/100.0+1-margin, \
+                                   fill="green", outline="green")
+        for i in range(len(B)):
+            pixelNo=B[i]
+            histCanvas.create_oval(i+margin,\
+                            histCanvasHeight-pixelNo/100.0-1-margin, i+2+margin,\
+                            histCanvasHeight-pixelNo/100.0+1-margin,\
+                                   fill="blue", outline="blue")
+
+def colourPop(canvas):
+    canvas.data.cropPopToHappen=False
+    canvas.data.colourPopToHappen=True
+    canvas.data.drawOn=False
+    messagebox.showinfo(title="Colour Pop", message="Click on a part of the image which you want in colour" , parent=canvas.data.mainWindow)
+    if canvas.data.cropPopToHappen==False:
+        canvas.data.mainWindow.bind("<ButtonPress-1>", lambda event: getPixel(event, canvas))
+
+
+def getPixel(event, canvas):
+    # have to check if Colour Pop button is pressed or not, otherwise, the root
+    # events which point to different functions based on what button has been
+    # pressed will get mixed up
+    try: # to avoid confusion between the diffrent events
+        # asscoaited with crop and colourPop
+        if canvas.data.colourPopToHappen==True and \
+           canvas.data.cropPopToHappen==False and canvas.data.image!=None :
+            data=[]
+            # catch the location of the pixel selected by the user
+            # multiply it by the scale to get pixel's olaction of the
+            #actual image
+            canvas.data.pixelx=\
+            int(round((event.x-canvas.data.imageTopX)*canvas.data.imageScale))
+            canvas.data.pixely=\
+            int(round((event.y-canvas.data.imageTopY)*canvas.data.imageScale))
+            pixelr, pixelg, pixelb= \
+            canvas.data.image.getpixel((canvas.data.pixelx, canvas.data.pixely))
+            # the amount of deviation allowed from selected pixel's value
+            tolerance=60 
+            for y in range(canvas.data.image.size[1]):
+                for x in range(canvas.data.image.size[0]):
+                    r, g, b= canvas.data.image.getpixel((x, y))
+                    avg= int(round((r + g + b)/3.0))
+                    # if the deviation of each pixel value > tolerance,
+                    # make them gray else keep them coloured
+                    if (abs(r-pixelr)>tolerance or
+                        abs(g-pixelg)>tolerance or
+                        abs(b-pixelb)>tolerance ):
+                        R, G, B= avg, avg, avg
+                    else:
+                        R, G, B=r,g,b
+                    data.append((R, G, B))
+            canvas.data.image.putdata(data)
+            save(canvas)
+            canvas.data.undoQueue.append(canvas.data.image.copy())
+            canvas.data.imageForTk=makeImageForTk(canvas)
+            drawImage(canvas)
+    except:
+        pass
+    canvas.data.colourPopToHappen=False
+
 def crop(canvas):
     canvas.data.colourPopToHappen=False
     canvas.data.drawOn=False
@@ -530,6 +695,17 @@ def buttonsInit(root, canvas):
                             width=buttonWidth, height=buttonHeight,\
                             command=lambda: brightness(canvas))
     brightnessButton.grid(row=1 ,column=0)
+
+    histogramButton=Button(toolKitFrame, text="Histogram",\
+                           background=backgroundColour ,\
+                           width=buttonWidth,height=buttonHeight, \
+                           command=lambda: histogram(canvas))
+    histogramButton.grid(row=3,column=0)
+    colourPopButton=Button(toolKitFrame, text="Colour Pop",\
+                           background=backgroundColour, \
+                           width=buttonWidth,height=buttonHeight, \
+                           command=lambda: colourPop(canvas))
+    colourPopButton.grid(row=4,column=0)
     
     mirrorButton=Button(toolKitFrame, text="Flip Horizontal",\
                         background=backgroundColour, \
