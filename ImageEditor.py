@@ -508,6 +508,9 @@ def menuInit(root, canvas):
 
     filtermenu.add_command(label="Solarize",\
                            command=lambda:solarize(canvas))
+
+    filtermenu.add_command(label="Posterize",\
+                            command=lambda:posterize(canvas))
     
     menubar.add_cascade(label="Filter", menu=filtermenu)
     root.config(menu=menubar)
