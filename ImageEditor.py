@@ -517,7 +517,7 @@ def posterize(canvas):
     if canvas.data.image!=None:
         for col in range(canvas.data.imageSize[1]):
             for row in range(canvas.data.imageSize[0]):
-                r, g, b= canvas.data.image.getpixel((row, col))
+                r, g, b= canvas.data.image.getpixel((row, col))[0:3]
                 if r in range(32):
                     R=0
                 elif r in range(32, 96):
@@ -708,7 +708,7 @@ def buttonsInit(root, canvas):
                             background=backgroundColour ,\
                             width=buttonWidth, height=buttonHeight,\
                             command=lambda: brightness(canvas))
-    brightnessButton.grid(row=1 ,column=0)
+    brightnessButton.grid(row=2 ,column=0)
 
     histogramButton=Button(toolKitFrame, text="Histogram",\
                            background=backgroundColour ,\
@@ -736,7 +736,7 @@ def buttonsInit(root, canvas):
     transposeButton=Button(toolKitFrame, text="Rotate",\
                            background=backgroundColour, width=buttonWidth,\
                            height=buttonHeight,command=lambda: transpose(canvas))
-    transposeButton.grid(row=7,column=0)
+    transposeButton.grid(row=1,column=0)
 
     drawButton=Button(toolKitFrame, text="Draw",\
                       background=backgroundColour ,width=buttonWidth,\
