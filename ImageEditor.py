@@ -17,6 +17,74 @@ import imghdr
 from PIL import ImageDraw
 from collections import *
 
+################ DRAW ################
+
+def drawOnImage(canvas):
+    canvas.data.colourPopToHappen=False
+    canvas.data.cropPopToHappen=False
+    canvas.data.drawOn=True
+    drawWindow=Toplevel(canvas.data.mainWindow)
+    drawWindow.title="Draw"
+    drawFrame=Frame(drawWindow)
+    redButton=Button(drawFrame, bg="red", width=2, \
+                     command=lambda: colourChosen(drawWindow,canvas, "red"))
+    redButton.grid(row=0,column=0)
+    blueButton=Button(drawFrame, bg="blue", width=2,\
+                      command=lambda: colourChosen(drawWindow,canvas, "blue"))
+    blueButton.grid(row=0,column=1)
+    greenButton=Button(drawFrame, bg="green",width=2, \
+                       command=lambda: colourChosen(drawWindow,canvas, "green"))
+    greenButton.grid(row=0,column=2)
+    magentaButton=Button(drawFrame, bg="magenta", width=2,\
+                         command=lambda: colourChosen(drawWindow,canvas, "magenta"))
+    magentaButton.grid(row=1,column=0)
+    cyanButton=Button(drawFrame, bg="cyan", width=2,\
+                      command=lambda: colourChosen(drawWindow,canvas, "cyan"))
+    cyanButton.grid(row=1,column=1)
+    yellowButton=Button(drawFrame, bg="yellow",width=2,\
+                        command=lambda: colourChosen(drawWindow,canvas, "yellow"))
+    yellowButton.grid(row=1,column=2)
+    orangeButton=Button(drawFrame, bg="orange", width=2,\
+                        command=lambda: colourChosen(drawWindow,canvas, "orange"))
+    orangeButton.grid(row=2,column=0)
+    purpleButton=Button(drawFrame, bg="purple",width=2, \
+                        command=lambda: colourChosen(drawWindow,canvas, "purple"))
+    purpleButton.grid(row=2,column=1)
+    brownButton=Button(drawFrame, bg="brown",width=2,\
+                       command=lambda: colourChosen(drawWindow,canvas, "brown"))
+    brownButton.grid(row=2,column=2)
+    blackButton=Button(drawFrame, bg="black",width=2,\
+                       command=lambda: colourChosen(drawWindow,canvas, "black"))
+    blackButton.grid(row=3,column=0)
+    whiteButton=Button(drawFrame, bg="white",width=2, \
+                       command=lambda: colourChosen(drawWindow,canvas, "white"))
+    whiteButton.grid(row=3,column=1)
+    grayButton=Button(drawFrame, bg="gray",width=2,\
+                      command=lambda: colourChosen(drawWindow,canvas, "gray"))
+    grayButton.grid(row=3,column=2)
+    drawFrame.pack(side=BOTTOM)
+
+
+def colourChosen(drawWindow, canvas, colour):
+    if canvas.data.image!=None:
+        canvas.data.drawColour=colour
+        canvas.data.mainWindow.bind("<B1-Motion>",\
+                                    lambda event: drawDraw(event, canvas))
+    drawWindow.destroy()
+    
+
+def drawDraw(event, canvas):
+    if canvas.data.drawOn==True:
+        x=float(round((event.x-canvas.data.imageTopX)*canvas.data.imageScale))
+        y=float(round((event.y-canvas.data.imageTopY)*canvas.data.imageScale))
+        draw = ImageDraw.Draw(canvas.data.image)
+        draw.ellipse((x-3, y-3, x+3, y+3), fill=canvas.data.drawColour,\
+                    outline=None )
+        save(canvas)
+        canvas.data.undoQueue.append(canvas.data.image.copy())
+        canvas.data.imageForTk=makeImageForTk(canvas)
+        drawImage(canvas)
+
 def crop(canvas):
     canvas.data.colourPopToHappen=False
     canvas.data.drawOn=False
@@ -178,6 +246,7 @@ def transpose(canvas):
         canvas.data.undoQueue.append(canvas.data.image.copy())
         canvas.data.imageForTk=makeImageForTk(canvas)
         drawImage(canvas)
+
 
 ############### FILTERS ######################
         
@@ -478,7 +547,12 @@ def buttonsInit(root, canvas):
                            background=backgroundColour, width=buttonWidth,\
                            height=buttonHeight,command=lambda: transpose(canvas))
     transposeButton.grid(row=7,column=0)
-   
+
+    drawButton=Button(toolKitFrame, text="Draw",\
+                      background=backgroundColour ,width=buttonWidth,\
+                      height=buttonHeight,command=lambda: drawOnImage(canvas))
+    drawButton.grid(row=8,column=0)
+
     resetButton=Button(toolKitFrame, text="Reset",\
                        background=backgroundColour ,width=buttonWidth,\
                        height=buttonHeight, command=lambda: reset(canvas))
