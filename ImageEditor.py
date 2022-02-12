@@ -130,7 +130,9 @@ def changeColours(canvas, redSlider, blueSlider, \
         histWindow.destroy()
         canvas.data.histWindowClose=False
     else:
-        
+        # the slider value indicates the % by which the red/green/blue
+        # value of the pixels of the image need to incresed (for +ve values)
+        # or decreased (for -ve values)
         if canvas.data.image!=None and histWindow.winfo_exists() :
             #print(canvas.data.image.split())
             R, G, B= canvas.data.image.split()[0:3]
@@ -208,25 +210,32 @@ def colourPop(canvas):
 
 
 def getPixel(event, canvas):
-    
+    # have to check if Colour Pop button is pressed or not, otherwise, the root
+    # events which point to different functions based on what button has been
+    # pressed will get mixed up
     try: 
+        # to avoid confusion between the diffrent events
+        # asscoaited with crop and colourPop
         if canvas.data.colourPopToHappen==True and \
            canvas.data.cropPopToHappen==False and canvas.data.image!=None :
             data=[]
-            
+            # catch the location of the pixel selected by the user
+            # multiply it by the scale to get pixel's olaction of the
+            #actual image
             canvas.data.pixelx=\
             int(round((event.x-canvas.data.imageTopX)*canvas.data.imageScale))
             canvas.data.pixely=\
             int(round((event.y-canvas.data.imageTopY)*canvas.data.imageScale))
             pixelr, pixelg, pixelb= \
             canvas.data.image.getpixel((canvas.data.pixelx, canvas.data.pixely))
-           
+            # the amount of deviation allowed from selected pixel's value
             tolerance=60 
             for y in range(canvas.data.image.size[1]):
                 for x in range(canvas.data.image.size[0]):
                     r, g, b= canvas.data.image.getpixel((x, y))[0:3]
                     avg= int(round((r + g + b)/3.0))
-                    
+                    # if the deviation of each pixel value > tolerance,
+                    # make them gray else keep them coloured
                     if (abs(r-pixelr)>tolerance or
                         abs(g-pixelg)>tolerance or
                         abs(b-pixelb)>tolerance ):
@@ -246,7 +255,10 @@ def getPixel(event, canvas):
 def crop(canvas):
     canvas.data.colourPopToHappen=False
     canvas.data.drawOn=False
-   
+    # have to check if crop button is pressed or not, otherwise,
+    # the root events which point to
+    # different functions based on what button has been pressed
+    # will get mixed up 
     canvas.data.cropPopToHappen=True
     messagebox.showinfo(title="Crop", \
                           message="Draw cropping rectangle and press Enter" ,\
@@ -260,13 +272,14 @@ def crop(canvas):
                                     lambda event: endCrop(event, canvas))
 
 def startCrop(event, canvas):
-    
+    #for detecting the start of a crop
     if canvas.data.endCrop==False and canvas.data.cropPopToHappen==True:
         canvas.data.startCropX=event.x
         canvas.data.startCropY=event.y
 
 def drawCrop(event,canvas):
-    
+    # keeps extending the crop rectange as the user extends
+    # his desired crop rectangle
     if canvas.data.endCrop==False and canvas.data.cropPopToHappen==True:
         canvas.data.tempCropX=event.x
         canvas.data.tempCropY=event.y
@@ -276,7 +289,9 @@ def drawCrop(event,canvas):
             canvas.data.tempCropY, fill="gray", stipple="gray12", width=0)
 
 def endCrop(event, canvas):
-    
+    # set canvas.data.endCrop=True so that button pressed movements
+    # are not caught anymore but set it to False when "Enter"
+    # is pressed so that crop can be performed another time too
     if canvas.data.cropPopToHappen==True:
         canvas.data.endCrop=True
         canvas.data.endCropX=event.x
@@ -315,7 +330,9 @@ def changeBrightness(canvas, brightnessWindow, brightnessSlider, \
         canvas.data.brightnessWindowClose=False
         
     else:
-       
+        # increasing pixel values according to slider value increases
+        # brightness we change ot according to the difference between the
+        # previous value and the current slider value
         if canvas.data.image!=None and brightnessWindow.winfo_exists():
             sliderVal=brightnessSlider.get()
             scale=(sliderVal-previousVal)/100.0
@@ -384,7 +401,9 @@ def transpose(canvas):
     canvas.data.colourPopToHappen=False
     canvas.data.cropPopToHappen=False
     canvas.data.drawOn=False
-    
+    # I treated the image as a continuous list of pixel values row-wise
+    # and simply excnaged the rows and the coloums
+    # in oder to make it rotate clockewise, I reversed all the rows
     if canvas.data.image!=None:
         imageData=list(canvas.data.image.getdata())
         newData=[]
@@ -410,7 +429,8 @@ def covertGray(canvas):
     canvas.data.colourPopToHappen=False
     canvas.data.cropPopToHappen=False
     canvas.data.drawOn=False
-    
+    # value of each channel of a pixel is set to the average of the original
+    # values of the channels
     if canvas.data.image!=None:
         data=[]
         for col in range(canvas.data.image.size[1]):
@@ -477,10 +497,13 @@ def performSolarize(canvas, solarizeWindow, solarizeSlider, previousThreshold):
         canvas.data.solarizeWindowClose=False
         
     else:
+        # the  slider denotes the % of solarization thta the user wants,
+        # so the threshold (above which pixels are inverted) is inversely
+        # related to the slider value
        
         if solarizeWindow.winfo_exists():
             sliderVal=solarizeSlider.get()
-            threshold_=255-sliderVal
+            threshold_=255-sliderVal 
             if canvas.data.image!=None and threshold_!=previousThreshold:
                 canvas.data.image=ImageOps.solarize(canvas.data.image,\
                                                     threshold=threshold_)
@@ -499,7 +522,9 @@ def posterize(canvas):
     canvas.data.colourPopToHappen=False
     canvas.data.cropPopToHappen=False
     canvas.data.drawOn=False
-   
+    # we basically reduce the range of colurs from 256 to 5 bits
+    # and so, assign a single new value to each colour value
+    # in each succesive range
     posterData=[]
     if canvas.data.image!=None:
         for col in range(canvas.data.imageSize[1]):
@@ -549,14 +574,19 @@ def keyPressed(canvas, event):
     elif event.keysym=="y":
         redo(canvas)
 
-
+# we use deques so as to make Undo and Redo more efficient and avoid
+# memory space isuues 
+# after each change, we append the new version of the image to
+# the Undo queue
 def undo(canvas):
     if len(canvas.data.undoQueue)>0:
-       
+        # the last element of the Undo Deque is the
+        # current version of the image
         lastImage=canvas.data.undoQueue.pop()
-       
+        # we would want the current version if wehit redo after undo
+        canvas.data.redoQueue.append(lastImage)
     if len(canvas.data.undoQueue)>0:
-        
+       # the previous version of the image 
         canvas.data.image=canvas.data.undoQueue[-1]
     save(canvas)
     canvas.data.imageForTk=makeImageForTk(canvas)
@@ -567,7 +597,8 @@ def redo(canvas):
         canvas.data.image=canvas.data.redoQueue[0]
     save(canvas)
     if len(canvas.data.redoQueue)>0:
-        
+       # we remove this version from the Redo Deque beacuase it
+        # has become our current image 
         lastImage=canvas.data.redoQueue.popleft()
         canvas.data.undoQueue.append(lastImage)
     canvas.data.imageForTk=makeImageForTk(canvas)
@@ -604,7 +635,7 @@ def newImage(canvas):
         canvas.data.image=im
         canvas.data.originalImage=im.copy()
         canvas.data.undoQueue.append(im.copy())
-        canvas.data.imageSize=im.size 
+        canvas.data.imageSize=im.size #the dimentons of the original image
         canvas.data.imageForTk=makeImageForTk(canvas)
         drawImage(canvas)
     else:
@@ -616,26 +647,27 @@ def newImage(canvas):
 def makeImageForTk(canvas):
     im=canvas.data.image
     if canvas.data.image!=None:
-        
+        # After cropping the now 'image' might have diffrent
+        # dimensional ratios
         imageWidth=canvas.data.image.size[0] 
         imageHeight=canvas.data.image.size[1]
-        
+        #To make biggest version of the image fit inside the canvas
         if imageWidth>imageHeight:
             resizedImage=im.resize((canvas.data.width,\
                 int(round(float(imageHeight)*canvas.data.width/imageWidth))))
-            
+            # store the scale so as to use it later
             canvas.data.imageScale=float(imageWidth)/canvas.data.width
         else:
             resizedImage=im.resize((int(round(float(imageWidth)*canvas.data.height/imageHeight)),\
                                     canvas.data.height))
             canvas.data.imageScale=float(imageHeight)/canvas.data.height
-       
+        # we may need to refer to ther resized image atttributes again
         canvas.data.resizedIm=resizedImage
         return ImageTk.PhotoImage(resizedImage)
  
 def drawImage(canvas):
     if canvas.data.image!=None:
-        
+        # make the canvas center and the image center the same
         canvas.create_image(canvas.data.width/2.0-canvas.data.resizedIm.size[0]/2.0,
                         canvas.data.height/2.0-canvas.data.resizedIm.size[1]/2.0,
                             anchor=NW, image=canvas.data.imageForTk)
@@ -785,7 +817,7 @@ def run():
     canvasHeight=780
     canvas = Canvas(root, width=canvasWidth, height=canvasHeight, \
                     background="gray")
-    
+    # Setting up canvas data and call init
     class Struct: pass
     canvas.data = Struct()
     canvas.data.width=canvasWidth
